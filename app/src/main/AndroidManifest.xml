@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.jtattersall.NightLightDarkroom">
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="Darkroom Toggle">
+
+        <service
+            android:name="net.jtattersall.NightLightDarkroom.DarkroomTileService"
+            android:icon="@drawable/ic_brightness_medium_black_24dp"
+            android:label="Normal"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
