@@ -10,11 +10,14 @@ import android.os.Build;
 import android.database.ContentObserver;
 import android.os.Handler;
 import android.net.Uri;
-;
+import android.content.SharedPreferences;
+import androidx.preference.PreferenceManager;
 
 public class DarkroomTileService extends TileService {
     private boolean isDarkroom = false;
-    private int normalTemp = 1500;
+
+    private SharedPreferences preferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferencesListener;
 
     private ContentObserver nightLightActiveObserver;
 
@@ -22,6 +25,18 @@ public class DarkroomTileService extends TileService {
     public void onCreate() {
         // create notification channel for errors
         createNotificationChannel();
+
+        // get preferences
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // create listener for settings changing
+        preferencesListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                updateTemp();
+            }
+        };
+        preferences.registerOnSharedPreferenceChangeListener(preferencesListener);
 
         // define observer for night light enabled setting
         nightLightActiveObserver = new ContentObserver(new Handler()) {
@@ -35,14 +50,13 @@ public class DarkroomTileService extends TileService {
 
         // start observing night light enabled setting
         this.getContentResolver().registerContentObserver(nightLightActiveUri, false, nightLightActiveObserver);
-
-        saveNormalTemp(); // save normal night light temperature
     }
 
     @Override
     public void onDestroy() {
-        // stop observing setting
+        // stop observing setting and preferences
         this.getContentResolver().unregisterContentObserver(nightLightActiveObserver);
+        preferences.unregisterOnSharedPreferenceChangeListener(preferencesListener);
     }
 
     @Override
@@ -57,11 +71,13 @@ public class DarkroomTileService extends TileService {
             }
         }
     }
+
     private void enableDarkroom(Tile tile) {
-        if (setColorTemp(0)) {
+        int darkroomTemp = Integer.parseInt(preferences.getString("darkroomTemp", "0"));
+        if (setColorTemp(darkroomTemp)) {
             isDarkroom = true;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                tile.setSubtitle(getString(R.string.tile_enabled_subtitle, 0));
+                tile.setSubtitle(getString(R.string.tile_enabled_subtitle, darkroomTemp));
             }
             tile.setState(Tile.STATE_ACTIVE);
             tile.updateTile();
@@ -69,6 +85,7 @@ public class DarkroomTileService extends TileService {
     }
 
     private void disableDarkroom(Tile tile, boolean activeObserver) {
+        int normalTemp = Integer.parseInt(preferences.getString("normalTemp", "1200"));
         if (setColorTemp(normalTemp) || activeObserver) {
             isDarkroom = false;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -77,6 +94,25 @@ public class DarkroomTileService extends TileService {
             tile.setState(Tile.STATE_INACTIVE);
             tile.updateTile();
         }
+    }
+
+    // called when settings are changed to update temperature and tile
+    private void updateTemp() {
+        Tile tile = getQsTile();
+        if (isDarkroom) {
+            int darkroomTemp = Integer.parseInt(preferences.getString("darkroomTemp", "0"));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                tile.setSubtitle(getString(R.string.tile_enabled_subtitle, darkroomTemp));
+            }
+            setColorTemp(darkroomTemp);
+        } else {
+            int normalTemp = Integer.parseInt(preferences.getString("normalTemp", "1200"));
+            setColorTemp(normalTemp);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                tile.setSubtitle(getString(R.string.tile_disabled_subtitle, normalTemp));
+            }
+        }
+        tile.updateTile();
     }
 
     // called when night light enabled state changes to update tile accordingly
@@ -100,12 +136,6 @@ public class DarkroomTileService extends TileService {
         } catch (Settings.SettingNotFoundException ex) {}
 
         return nightLightActive == 1;
-    }
-
-    private void saveNormalTemp() {
-        try {
-            normalTemp = getSecureSettingInt("night_display_color_temperature");
-        } catch (Settings.SettingNotFoundException ex) { /* do nothing */ }
     }
 
     private int getSecureSettingInt(String name) throws Settings.SettingNotFoundException {

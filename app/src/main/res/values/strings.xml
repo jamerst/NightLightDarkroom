@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Darkroom Toggle</string>
+
+    <string name="title_activity_settings">Darkroom Settings</string>
+    <string name="colour_temps_header">Colour Temperatures</string>
+    <string name="normal_temp_title">Normal colour temperature (K)</string>
+    <string name="darkroom_temp_title">Darkroom colour temperature (K)</string>
+
+    <string name="tile_title">Darkroom Mode</string>
+    <string name="tile_enabled_subtitle">Enabled (%1$dK)</string>
+    <string name="tile_disabled_subtitle">Disabled (%1$dK)</string>
+
     <string name="permissions_error_title">Permissions Error</string>
     <string name="permissions_error_content">
         WRITE_SECURE_SETTINGS permission was denied, this permission is required for the app to function. Please grant it with ADB using the command in the README on GitHub.
     </string>
-    <string name="tile_title">Darkroom Mode</string>
-    <string name="tile_enabled_subtitle">Enabled (%1$dK)</string>
-    <string name="tile_disabled_subtitle">Disabled (%1$dK)</string>
-    <string name="app_name">Darkroom Toggle</string>
     <string name="error_notification_channel_name">Application Errors</string>
     <string name="error_notification_channel_desc">Error messages from application</string>
 </resources>
